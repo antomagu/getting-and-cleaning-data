@@ -1,51 +1,69 @@
 #Getting and Cleaning Data Project John Hopkins Coursera
 #Author: Antonio
 
-#Load Packages and get the Data
-packages <- c("data.table", "reshape2")
-sapply(packages, require, character.only=TRUE, quietly=TRUE)
-path <- getwd()
-url <- "https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip"
-download.file(url, file.path(path, "dataFiles.zip"))
-unzip(zipfile = "dataFiles.zip")
+# 1 Merge the training and test datasets
 
-#Load activity labels + features
-activityLabels <- fread(file.path(path, "UCI HAR Dataset/activity_labels.txt")
-                        , col.names = c("classLabels", "activityName"))
-features <- fread(file.path(path, "UCI HAR Dataset/features.txt")
-                  , col.names = c("index", "featureNames"))
-featuresWanted <- grep("(mean|std)\\(\\)", features[, featureNames])
-measurements <- features[featuresWanted, featureNames]
-measurements <- gsub('[()]', '', measurements)
+getdata_projectfiles_UCI_HAR_Dataset <- read_csv("C:/Users/anton/Downloads/getdata_projectfiles_UCI HAR Dataset.zip")
 
-#Load train datasets
-train <- fread(file.path(path, "UCI HAR Dataset/train/X_train.txt"))[, featuresWanted, with = FALSE]
-data.table::setnames(train, colnames(train), measurements)
-trainActivities <- fread(file.path(path, "UCI HAR Dataset/train/Y_train.txt")
-                       , col.names = c("Activity"))
-trainSubjects <- fread(file.path(path, "UCI HAR Dataset/train/subject_train.txt")
-                       , col.names = c("SubjectNum"))
-train <- cbind(trainSubjects, trainActivities, train)
+## Reading files of Test
 
-#Load test datasets
-test <- fread(file.path(path, "UCI HAR Dataset/test/X_test.txt"))[, featuresWanted, with = FALSE]
-data.table::setnames(test, colnames(test), measurements)
-testActivities <- fread(file.path(path, "UCI HAR Dataset/test/Y_test.txt")
-                        , col.names = c("Activity"))
-testSubjects <- fread(file.path(path, "UCI HAR Dataset/test/subject_test.txt")
-                      , col.names = c("SubjectNum"))
-test <- cbind(testSubjects, testActivities, test)
+#Load the Data
+
+X_test <- read_csv("C:/Users/anton/Downloads/test/X_test.txt")
+y_test <- read_csv("C:/Users/anton/Downloads/test/y_test.txt")
+subject_test <- read.table("C:/Users/anton/Downloads/test/subject_test.txt", quote="\"", comment.char="")
+
+## Reading files of Train
+
+X_train <- read_csv("C:/Users/anton/Downloads/train/X_train.txt")
+y_train <- read_csv("C:/Users/anton/Downloads/train/y_train.txt")
+subject_train <- read.table("C:/Users/anton/Downloads/train/subject_train.txt", quote="\"", comment.char="")
+
+## Reading feature
+
+features <- read.table("C:/Users/anton/Downloads/features.txt", quote="\"", comment.char="")
+
+## Reading activity_labels
+
+activity_labels <- read.table("C:/Users/anton/Downloads/activity_labels.txt", quote="\"", comment.char="")
+
+## Assigning variable names
+colnames(X_train) <- features[,2]
+colnames(y_train) <- "activityID"
+colnames(subject_train) <- "subjectID"
+
+colnames(X_test) <- features[,2]
+colnames(y_test) <- "activityID"
+colnames(subject_test) <- "subjectID"
 
 #Merge datasets
-combined <- rbind(train, test)
+train <- cbind(y_train, X_train)
+test <- cbind(y_test, X_test)
+df<- rbind(train, test)
 
-#Convert classLabels to activityName basically. More explicit. 
-combined[["Activity"]] <- factor(combined[, Activity]
-                              , levels = activityLabels[["classLabels"]]
-                              , labels = activityLabels[["activityName"]])
+# 2 Extracts only the measurements on the mean and standard deviation for each measurement.
+colNames <- colnames(df)
 
-combined[["SubjectNum"]] <- as.factor(combined[, SubjectNum])
-combined <- reshape2::melt(data = combined, id = c("SubjectNum", "Activity"))
-combined <- reshape2::dcast(data = combined, SubjectNum + Activity ~ variable, fun.aggregate = mean)
+#Create vector for defining ID, mean, and sd
+mean_and_std <- (grepl("activityID", colNames) |
+                   grepl("subjectID", colNames) |
+                   
+                   #SHOULD NOT BE ACCEPTED AS A NEW SUBMISSION
+                 grepl("mean..", colNames) |
+                   grepl("std...", colNames)
+)
 
-data.table::fwrite(x = combined, file = "tidyData.txt", quote = FALSE)
+setForMeanAndStd <- df[ , mean_and_std == TRUE]
+
+# 3 Uses descriptive activity names to name the activities in the data set
+setWithActivityNames <- merge(setForMeanAndStd, df, activity_labels 
+                              by='activityId',
+                              all.x=TRUE)
+# 4 Appropriately labels the data set with descriptive variable names
+# see 1.3, 2.2, 2.3
+
+# 5 From the data set in step 4, creates a second, independent tidy data set with the average of each variable for each activity and each subject.
+tidySet <- aggregate(. ~subjectID + activityID, setWithActivityNames, mean)
+tidySet <- tidySet[order(tidySet$subjectID, tidySet$activityID), ]
+
+write.table(tidySet, "tidySet.txt", row.names = FALSE)
