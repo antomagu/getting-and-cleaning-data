@@ -63,7 +63,5 @@ setWithActivityNames <- merge(setForMeanAndStd, df, activity_labels
 # see 1.3, 2.2, 2.3
 
 # 5 From the data set in step 4, creates a second, independent tidy data set with the average of each variable for each activity and each subject.
-tidySet <- aggregate(. ~subjectID + activityID, setWithActivityNames, mean)
-tidySet <- tidySet[order(tidySet$subjectID, tidySet$activityID), ]
 
-write.table(tidySet, "tidySet.txt", row.names = FALSE)
+write.table(setWithActivityNames, "tidySet.txt", row.names = FALSE)
