@@ -1,7 +1,7 @@
 #Getting and Cleaning Data Project John Hopkins Coursera
 #Author: Antonio
 
-# 1 Merge the training and test datasets
+# Download the dataset
 
 getdata_projectfiles_UCI_HAR_Dataset <- read_csv("C:/Users/anton/Downloads/getdata_projectfiles_UCI HAR Dataset.zip")
 
@@ -36,9 +36,10 @@ colnames(X_test) <- features[,2]
 colnames(y_test) <- "activityID"
 colnames(subject_test) <- "subjectID"
 
-#Merge datasets
-train <- cbind(y_train, X_train)
-test <- cbind(y_test, X_test)
+# 1. Merge the training and test datasets
+# 1.1 Merge datasets
+train <- cbind(y_train, subject_train, X_train)
+test <- cbind(y_test,subject_test, X_test)
 df<- rbind(train, test)
 
 # 2 Extracts only the measurements on the mean and standard deviation for each measurement.
@@ -64,4 +65,11 @@ setWithActivityNames <- merge(setForMeanAndStd, df, activity_labels
 
 # 5 From the data set in step 4, creates a second, independent tidy data set with the average of each variable for each activity and each subject.
 
+
+        tidySet <- aggregate(. ~subjectID + activityID, setWithActivityNames, mean)
+        tidySet <- tidySet[order(tidySet$subjectID, tidySet$activityID), ]
+        
+        # 5.2 Writing second tidy data set into a txt file
+        write.table(tidySet, "tidySet.txt", row.names = FALSE)
+        
 write.table(setWithActivityNames, "tidySet.txt", row.names = FALSE)
