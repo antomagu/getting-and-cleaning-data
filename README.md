@@ -10,4 +10,6 @@
 
 5 From the data set in step 4, creates a second, independent tidy data set with the average of each variable for each activity and each subject.
 
-## The run_analysis.R contains all the code 
+### CodeBook.md describes the data, work that was performed to clean up the data. 
+
+### The run_analysis.R contains all the code 
