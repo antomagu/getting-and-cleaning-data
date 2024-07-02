@@ -36,6 +36,8 @@ colnames(X_test) <- features[,2]
 colnames(y_test) <- "activityID"
 colnames(subject_test) <- "subjectID"
 
+colnames(activity_labels) <- c('activityId','activityType')
+
 # 1. Merge the training and test datasets
 # 1.1 Merge datasets
 train <- cbind(y_train, subject_train, X_train)
